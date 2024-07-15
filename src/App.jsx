@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import CountryCodes from './data/CountryCodes.json'
 import ExampleResponse_LatLon_Imperial from './data/ExampleResponse_LatLon_Imperial.json'
 import { useWeatherApi } from './hooks/useWeatherApi'
+import { CarasolList, Temperature } from './components'
+import { minuteToString, monthToString } from './utils'
 
 function App() {
-
-	const geocodingUrl = 'http://api.openweathermap.org/geo/1.0/direct?q='
-	const apiKey = import.meta.env.VITE_WEATHER_API_KEY
-	const fahrenheit = <span className='fahrenheit-symbol'>&#8457;</span>;
 
 	// TODO: uncomment below to get api data (also check the handleOnClick_submitLocationData for another line to uncomment)
 	// const [data, setLocation] = useWeatherApi()
@@ -22,6 +19,8 @@ function App() {
 			console.log('data.currnet.dt: ', data.current.dt);
 			setCurrentDate(new Date(data.current.dt * 1000))  // multiply becase we get seconds and need to pass milliseconds
 		}
+
+		console.log('feels_like: ', data.current.feels_like);
 	}, [data])
 	console.log(currentDate);
 	function handleOnChange_countryCode(e) {
@@ -39,6 +38,7 @@ function App() {
 
 	return (
 		<>
+			{/* LOCATION FORM */}
 			<p>Country Code: {countryName}</p>
 			<form action="#">
 				<label htmlFor="countryCode">Country Code:</label>
@@ -46,65 +46,92 @@ function App() {
 				<button onClick={e => handleOnClick_submitLocationData(e)}>Submit</button>
 			</form>
 
-			<div className='date'>
-				{currentDate && currentDate.getMonth()}
-				-{currentDate && currentDate.getDate()}
-				-{currentDate && currentDate.getYear() - 100} {/* years after 1999 are given weird (124 === 2024) so -100 removes the leading 1 */}
-			</div>
+			<div className='current-weather-container'>
 
-			<div className='sunrise-sunset'>
-				{(data.current.sunrise && data.current.sunset) &&
-					<p>Sunrise at {
-						new Date(data.current.sunrise * 1000).getHours()
-					}:{
-							new Date(data.current.sunrise * 1000).getMinutes()
-						}, Sunset at {
-							new Date(data.current.sunset * 1000).getHours()
-						}:{
-							new Date(data.current.sunset * 1000).getMinutes()
-						}</p>
-				}
-			</div>
-			<div className='temperature'>
-				{
-					data.current.temp &&
-					<p>
-						Temp: {data.current.temp} {fahrenheit}
-					</p>
-				}
+				{/* DATE */}
+				<h2 className='date'>
+					{currentDate && monthToString(currentDate.getMonth())}
+					-{currentDate && currentDate.getDate()}
+					-{currentDate && currentDate.getYear() - 100} {/* years after 1999 are given weird (124 === 2024) so -100 removes the leading 1 */}
+				</h2>
 
-				{
-					data.current.temp &&
-					<p>
-						Feels: {data.current.feels_like} {fahrenheit}
-					</p>
-				}
-			</div>
+				{/* SUNRISE / SUNSET */}
+				<div className='sunrise-sunset'>
+					{(data.current.sunrise && data.current.sunset) &&
+						<>
+							<h3>Sunrise & Sunset</h3>
+							<p>
+								{minuteToString(data.current.sunrise)}<br />
+								{minuteToString(data.current.sunset)}
+							</p>
+						</>
+					}
+				</div>
 
-			<div className='hourly'>
-				{
-					<ul className='hourly-list'>
-						{
-							data.hourly && data.hourly.map((hour, index) => {
-								return (
-									<li className='hourly-item' key={index}>
-										<h3>{new Date(hour.dt * 1000).getHours()}</h3>
-										<p className='weather-temperature'>
-											Temp: {hour.temp} {fahrenheit}
-											<span className='temperature-feels-like'>
-												(feels: {hour.feels_like} {fahrenheit})
-											</span>
-										</p>
-										<p className='weather-description'>
-											{hour.weather.main} - <span className='description'>{hour.weather.description}</span>
-										</p>
-									</li>
-								)
-							})
-						}
-					</ul>
-				}
-			</div>
+				{/* // TEMPERATURE */}
+				<div className='temperature'>
+					<h3>Temp</h3>
+					{
+						(data.current.temp && data.current.feels_like) &&
+						<Temperature
+							temp={data.current.temp}
+							feels_like={data.current.feels_like}
+						/>
+					}
+				</div>
+
+				{/* CLOUDINESS */}
+				<div className='cloudiness'>
+					<h3>Coudiness</h3>
+					{data.current.clouds}%
+				</div>
+
+				{/* ULTRA VIOLET INDEX */}
+				<div className='uv-index'>
+					<h3>UV Index</h3>
+					{
+						data.current.uvi <= 2 ? `Low ${data.current.uvi}`
+							: data.current.uvi <= 5 ? `Moderate ${data.current.uvi}`
+								: data.current.uvi <= 7 ? `High ${data.current.uvi}`
+									: data.current.uvi <= 10 ? `Very High ${data.current.uvi}`
+										: `Extreme ${data.current.uvi}`
+					}
+				</div>
+
+				{/* VISIBILITY (api is in kilimeters) */}
+				<div className='visibility'>
+					<h3>Visibility</h3>
+					{data.current.visibility / 1000} km
+				</div>
+
+				{/* WIND */}
+				<div className='wind'>
+					<h3>Wind</h3>
+					<div>Speed / Gusts</div>
+					{data.current.wind_speed} / {data.current.wind_gust} mph
+				</div>
+
+				{/* RAIN / SNOW */}
+				<div className='rain-snow'>
+					<h3>Rain/Snow</h3>
+					{
+						data.current.rain ? `Rain ${data.current.rain} mm/h`
+							: data.current.snow ? `Snow ${data.current.snow} mm/h`
+								: ` N/A`
+					}
+				</div>
+			</div >
+
+			{/*  */}
+			< CarasolList
+				name='hourly'
+				data={data.hourly && data.hourly}
+			/>
+
+			<CarasolList
+				name='daily'
+				data={data.daily && data.daily}
+			/>
 		</>
 	)
 }
