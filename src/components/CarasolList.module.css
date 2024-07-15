@@ -1,0 +1,29 @@
+.CarasolList {
+	overflow-x: hidden;
+
+	ul.list {
+		display: flex;
+		flex-direction: row;
+		gap: 0.5rem;
+		list-style: none;
+
+		overflow-x: scroll;
+
+		li.item {
+			box-sizing: border-box;
+			min-width: 150px;
+			height: fit-content;
+			padding: 0 0.25rem;
+
+			border: solid 1px black;
+			border-radius: 0.5rem;
+
+			.weather {
+
+				.description {
+					display: block;
+				}
+			}
+		}
+	}
+}
