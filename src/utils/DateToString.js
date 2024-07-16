@@ -1,29 +1,31 @@
+import { DAYS_OF_WEEK, MONTHS_OF_YEAR } from "../constants"
+
 export function monthToString(monthIndex) {
 	switch (monthIndex) {
 		case 0:
-			return 'Jan'
+			return MONTHS_OF_YEAR.JANUARY
 		case 1:
-			return 'Feb'
+			return MONTHS_OF_YEAR.FEBRUARY
 		case 2:
-			return 'Mar'
+			return MONTHS_OF_YEAR.MARCH
 		case 3:
-			return 'Apr'
+			return MONTHS_OF_YEAR.APRIL
 		case 4:
-			return 'May'
+			return MONTHS_OF_YEAR.MAY
 		case 5:
-			return 'Jun'
+			return MONTHS_OF_YEAR.JUNE
 		case 6:
-			return 'Jul'
+			return MONTHS_OF_YEAR.JULY
 		case 7:
-			return 'Aug'
+			return MONTHS_OF_YEAR.AUGUST
 		case 8:
-			return 'Sep'
+			return MONTHS_OF_YEAR.SEPTEMBER
 		case 9:
-			return 'Oct'
+			return MONTHS_OF_YEAR.OCTOBER
 		case 10:
-			return 'Nov'
+			return MONTHS_OF_YEAR.NOVEMBER
 		case 11:
-			return 'Dec'
+			return MONTHS_OF_YEAR.DECEMBER
 		default:
 			return null
 	}
@@ -91,13 +93,13 @@ export function dayToString(epochSecs) {
 	// console.log('date.getDat');
 
 	switch (date.getDay()) {
-		case 0: return 'Sunday'
-		case 1: return 'Monday'
-		case 2: return 'Tuesday'
-		case 3: return 'Wednesday'
-		case 4: return 'Thursday'
-		case 5: return 'Friday'
-		case 6: return 'Saturday'
+		case 0: return DAYS_OF_WEEK.SUNDAY
+		case 1: return DAYS_OF_WEEK.MONDAY
+		case 2: return DAYS_OF_WEEK.TUESDAY
+		case 3: return DAYS_OF_WEEK.WEDNESDAY
+		case 4: return DAYS_OF_WEEK.THURSDAY
+		case 5: return DAYS_OF_WEEK.FRIDAY
+		case 6: return DAYS_OF_WEEK.FRIDAY
 		default: return 'Unknownday'
 	}
 }
