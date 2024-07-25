@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import CountryCodes from '../data/CountryCodes.json'
 
+const locationDefault = {
+	zip: null, name: null, lat: null, lon: null, country: null
+}
+
 export default function useGeocoding(props = { lat: '', long: '' }) {
 
 	const geocodingUrl = 'http://api.openweathermap.org/geo/1.0/direct?q='
 	const apiKey = import.meta.env.VITE_WEATHER_API_KEY
 
-	const [location, setLocation] = useState([{ lat: null, lon: null }])
-	const [city, setCity] = useState('lady lake')
+	const [location, setLocation] = useState(locationDefault)
+	const [city, setCity] = useState('Lady Lake')
 	const [stateCode, setStateCode] = useState('FL')
 	const [countryCode, setCountryCode] = useState('US')
 	const [countryName, setCountryName] = useState('United States')
@@ -15,19 +19,59 @@ export default function useGeocoding(props = { lat: '', long: '' }) {
 
 	/**
 	 * 
-	 * @param {string} city 
-	 * @param {string} state 
-	 * @param {string} country 
+	 * @param {string} zipCode 
+	 * @param {number} lat 
+	 * @param {number} lon 
 	 */
-	function getLocation(city, state, country) {
-		console.log(`\ngetLocation():\n\tcity: ${city}\n\tstate: ${state}\n\tcountry: ${country}`);
-		setCity(city)
+	async function getLocation(zipCode, lat, lon) {
+		console.log(`\ngetLocation():\n\tzipCode: ${zipCode}\n\tlat/lon: ${lat}/${lon}`);
 
-		setStateCode('FL')
+		let url;
 
-		const cCode = getCountryCode(country)
-		setCountryCode(cCode === null ? 'US' : cCode)
+		if (lat && lon) url = getUrl_latLon(lat, lon)
+		else url = getUrl_zipCode(zipCode, "US")
 
+		try {
+			const response = await fetch(url);
+			if (!response.ok) {
+				throw new Error(`Response status: ${response.status}`);
+			}
+
+			const json = await response.json();
+			console.log('json: ', json);
+
+			if (!json.name) setLocation({
+				...locationDefault,
+				name: json[0].name,
+				country: json[0].country,
+				lat: json[0].lat,
+				lon: json[0].lon
+			})
+			else setLocation(json)
+		} catch (error) {
+			console.error(error.message);
+		}
+
+		// TODO: future feature is to search using some combination of country/state/city
+		// setCity(city)
+		// setStateCode(state)
+		// const cCode = getCountryCode(country)
+		// setCountryCode(cCode === null ? 'US' : cCode)
+
+	}
+
+	/**
+	 * Get weather data with a zipcode
+	 * @param {string} zipCode - 5 didgit string
+	 * @param {string} countryCode - Two letter string. i.e United States = US
+	 * @returns {string} Request ready URL
+	 */
+	function getUrl_zipCode(zipCode, countryCode) {
+		return `http://api.openweathermap.org/geo/1.0/zip?zip=${zipCode},${countryCode}&appid=${apiKey}`
+	}
+
+	function getUrl_latLon(lat, lon) {
+		return `http://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=${1}&appid=${apiKey}`
 	}
 
 	/**

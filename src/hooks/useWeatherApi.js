@@ -4,13 +4,21 @@ export function useWeatherApi() {
 	const [location, getLocation] = useGeocoding()
 	const apiKey = import.meta.env.VITE_WEATHER_API_KEY
 	const [data, setData] = useState({})
+	const [isLocationRecentlyCalled, setIsLocationRecentlyCalled] = useState(false)
+
+	console.log(`useWeatherApi data: `, data);
 
 	useEffect(() => {
-		getData()
+		console.log('location: ', location);
+		if ((location.lat === null || location.lon === null) || isLocationRecentlyCalled) {
+			setIsLocationRecentlyCalled(false)
+			return
+		}
+		getData(location.lat, location.lon)
 	}, [location])
 
-	async function getData() {
-		const url = `http://api.openweathermap.org/data/3.0/onecall?lat=30.489772&lon=-99.771335&units=imperial&appid=${apiKey}`;
+	async function getData(lat, lon) {
+		const url = `http://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=imperial&appid=${apiKey}`;
 		try {
 			const response = await fetch(url);
 			if (!response.ok) {
@@ -19,6 +27,12 @@ export function useWeatherApi() {
 
 			const json = await response.json();
 			console.log('json: ', json);
+
+			if (!isLocationRecentlyCalled) {
+				setIsLocationRecentlyCalled(true)
+				getLocation(null, lat, lon)
+			}
+
 			setData(json)
 		} catch (error) {
 			console.error(error.message);
@@ -27,12 +41,17 @@ export function useWeatherApi() {
 	}
 
 	/**
-	 * 
+	 * Submits location data to get weather data
+	 * @param {string} zipCode - zip code
+	 * @param {number} lat - latitude
+	 * @param {number} lon - longitude
 	 */
-	function setLocation(city, stateCode, countryCode) {
-		console.log('setLocation()');
-		getLocation(city, stateCode, countryCode)
+	function setLocation(zipCode, lat, lon) {
+		console.log(`setLocation()\n\tzipCode: ${zipCode}\n\tlat/lon: ${lat} / ${lon}`);
+
+		if (lat !== null && lon !== null) getData(lat, lon)
+		else getLocation(zipCode, lat, lon)
 	}
 
-	return [data, setLocation]
+	return [data, location, setLocation]
 }
