@@ -27,4 +27,5 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
+    - run: vite build
     - run: NODE_ENV=production node server.js
