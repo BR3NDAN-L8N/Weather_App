@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { cloneElement, createElement, useEffect, useRef } from 'react'
+import { renderToStaticMarkup, renderToString } from 'react-dom/server'
 import styles from './CarasolList.module.css'
-import { Temperature } from './index';
+import '../App.css'
+import { Temperature, Weather } from './index';
 import { minuteToString, hourToString, dayToString, dateToString } from '../utils';
 
 /**
@@ -40,68 +42,68 @@ import { minuteToString, hourToString, dayToString, dateToString } from '../util
  */
 export function CarasolList({ name, data }) {
 
+	if (!data) return
+
 	if (data.weather) console.log('data.weather.icon', data.weather.icon);
+
+	/** @type {import('react').RefObject<HTMLUListElement>} */
+	const list = useRef(null)
+
+	useEffect(() => {
+		list.current.childNodes.forEach(li => {
+			observer.observe(li)
+		})
+	}, [list])
+
+	const observer = new IntersectionObserver(entries => {
+		entries.forEach(element => {
+
+			console.log('element: ', element);
+
+			if (element.isIntersecting) {
+				element.target.classList.add(styles.show)
+			} else {
+				element.target.classList.remove(styles.show)
+			}
+		})
+	}, {
+		threshold: [0.25, 0.5] // [left threshold, right threshold]
+	})
 
 	return (
 		<div className={styles.CarasolList}>
 
 			{/* CARASOL HEADING */}
-			<h2 className={styles.heading}>{name.toUpperCase()}</h2>
-			{
+			<h2 className={`${styles.heading} forecast-heading`}>{name.toUpperCase()}</h2>
 
+			{
 				// LIST
-				<ul className={styles.list}>
+				<ul className={styles.list} ref={list}>
 					{
 						data && data.map((datum, index) => {
 							return (
-
 								// - lIST ITEM
-								<li className={`${styles.item} blurred-background`} key={index}>
+								<li className={styles.item} key={index}>
 
 									{/* - - HEADING */}
-									<h3>
+									<h3 className={styles.heading}>
 										{
-											name === 'hourly' ?
-												hourToString(datum.dt)
-												: name === 'daily' ?
-													dateToString(datum.dt)
-													: minuteToString(datum.dt)
-										}
-										{
-											name === 'hourly' ?
-												<div>{dayToString(datum.dt)}</div>
-												: name === 'daily' ?
-													<div>{dayToString(datum.dt)}</div>
-													: <></>
+											// HOURLY = time
+											hourToString(datum.dt)
 										}
 									</h3>
+
+									{/* - - WEATHER */}
+									<Weather
+										data={datum.weather}
+										percipitation={datum.pop}
+									/>
 
 									{/* - - TEMERATURE */}
 									<Temperature
 										temp={datum.temp}
 										feels_like={datum.feels_like}
 									/>
-
-									{/* - - WEATHER */}
-									<div className={styles.weather}>
-										{datum.weather ?
-											<p>
-												{/* - - - TITLE */}
-												<span className={styles.type}>{datum.weather[0].main}</span>
-												{
-													// - - - ICON
-													datum.weather[0].icon &&
-													<img src={`https://openweathermap.org/img/wn/${datum.weather[0].icon}.png`} alt="" />
-												}
-												{/* - - - DESCRIPTION */}
-												<span className={styles.description}>
-													{datum.weather && datum.weather[0].description}
-												</span>
-											</p>
-											// - - - DATA UNAVAILABLE
-											: <p>Weather: n/a</p>
-										}
-									</div>
 								</li>
 							)
 						})
