@@ -56,11 +56,11 @@ export function monthToString(monthIndex) {
 export function hourToString(epochSecs) {
 	const hourNum = new Date(epochSecs * 1000).getHours()
 
-	if (hourNum === 0) return '12:00 AM'
+	if (hourNum === 0) return '12 AM'
 
-	if (hourNum <= 12) return hourNum + ':00 AM'
+	if (hourNum <= 12) return hourNum + ' AM'
 
-	return (hourNum - 12) + ':00 PM'
+	return (hourNum - 12) + ' PM'
 }
 
 /**
@@ -87,7 +87,7 @@ export function minuteToString(epochSecs) {
 export function dateToString(epochSecs) {
 	const date = getDate(epochSecs)
 
-	return `${date.getMonth()}/${date.getDate()} ` // Leave the space at the end! It's being used in the Daily carasol
+	return `${date.getMonth() + 1}/${date.getDate()} ` // Leave the space at the end! It's being used in the Daily carasol
 }
 
 /**
@@ -105,7 +105,7 @@ export function dayToString(epochSecs) {
 		case 3: return DAYS_OF_WEEK.WEDNESDAY
 		case 4: return DAYS_OF_WEEK.THURSDAY
 		case 5: return DAYS_OF_WEEK.FRIDAY
-		case 6: return DAYS_OF_WEEK.FRIDAY
+		case 6: return DAYS_OF_WEEK.SATURDAY
 		default: return 'Unknownday'
 	}
 }
