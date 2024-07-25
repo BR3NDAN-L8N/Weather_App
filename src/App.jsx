@@ -1,136 +1,175 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import ExampleResponse_LatLon_Imperial from './data/ExampleResponse_LatLon_Imperial.json'
 import { useWeatherApi } from './hooks/useWeatherApi'
-import { CarasolList, Temperature } from './components'
-import { minuteToString, monthToString } from './utils'
+import { CarasolList, CurrentWeather, BlockList } from './components'
+
+// TESTING DATA
+import ExampleResponse_LatLon_Imperial from './data/ExampleResponse_LatLon_Imperial.json'
+
+let recentLocationObject = {
+	zip: '32159',
+	lat: '',
+	lon: '',
+	name: 'Lake County'
+}
+
+/** @type {recentLocationObject[]} */
+const recentSearches = [recentLocationObject, recentLocationObject, recentLocationObject]
 
 function App() {
 
-	// TODO: uncomment below to get api data (also check the handleOnClick_submitLocationData for another line to uncomment)
-	// const [data, setLocation] = useWeatherApi()
+	// TODO: add an underscore to the 'data' from useWeatherApi when using test data. remove underscore and comment test data when done testing.
+	const [_data, location, setLocation] = useWeatherApi()
 	const data = ExampleResponse_LatLon_Imperial
-	const [countryName, setCountryName] = useState('')
+	const [country, setCountry] = useState('United States')
+	const [state, setState] = useState('Florida')
+	const [city, setCity] = useState('Lady Lake')
+	const [zipCode, setZipCode] = useState('32159')
+	const [isLocationFormVisible, setIsLocationFormVisisble] = useState(false)
 
-	const [currentDate, setCurrentDate] = useState()
+	const [previousLocations, setPreviousLocations] = useState(new Array(recentSearches.length).fill(false))
 
 	useEffect(() => {
-		if (data.current.dt) {
-			console.log('data.currnet.dt: ', data.current.dt);
-			setCurrentDate(new Date(data.current.dt * 1000))  // multiply becase we get seconds and need to pass milliseconds
-		}
+		if (!navigator.geolocation) return
+		navigator.geolocation.getCurrentPosition((position) => {
+			setLocation(null, position.coords.latitude, position.coords.longitude)
+		}, () => {
+			// error code here
+			console.warn("Error: Couldn't get geolocation");
+			setIsLocationFormVisisble(true)
+		});
 
-		console.log('feels_like: ', data.current.feels_like);
-	}, [data])
-	console.log(currentDate);
-	function handleOnChange_countryCode(e) {
-		// console.log(e.target.value);
+		console.log('previousLocations: ', previousLocations);
 
-		setCountryName(e.target.value)
+	}, [])
+
+	useEffect(() => {
+		console.log('Location: ', location)
+	}, [location])
+
+	// TODO: Add Country, State, and City to this location form
+	// function handleOnChange_country(e) {
+	// 	console.log(e.target.value);
+	// 	setCountry(e.target.value)
+	// }
+	// function handleOnChange_state(e) {
+	// 	console.log(e.target.value);
+	// 	setState(e.target.value)
+	// }
+	// function handleOnChange_city(e) {
+	// 	console.log(e.target.value);
+	// 	setCity(e.target.value)
+	// }
+
+
+	function handleOnChange_zipCode(e) {
+		console.log(e.target.value);
+		setZipCode(e.target.value)
 	}
 
+	/**
+	 * 
+	 * @param {Event} e - Event object when form is submitted
+	 */
 	function handleOnClick_submitLocationData(e) {
-		console.log('e', e);
+		e.preventDefault()
+		console.log(`handleOnClick_submitLocationData\n\tCountry: ${country}\n\tState: ${state}\n\t City: ${city}\n\tZip: ${zipCode}`);
 		// TODO: uncomment below to get api data (also check the useWeatherApi hook called with the useState stuff)
-		// setLocation('lady lake', 'fl', 'united states')
+
+		const formData = new FormData(e.target)
+		const formJson = Object.fromEntries(formData.entries())
+		if (formJson.lat !== '' && formJson.lon !== '') setLocation(null, formJson.lat, formJson.lon)
+		else setLocation(formJson.zip, null, null)
 	}
+
+	console.log('recentSearches: ', recentSearches);
+	console.log('previousLocations: ', previousLocations);
 
 
 	return (
 		<>
 			{/* LOCATION FORM */}
-			<p>Country Code: {countryName}</p>
-			<form action="#">
-				<label htmlFor="countryCode">Country Code:</label>
-				<input id='countryCode' type="text" onChange={e => handleOnChange_countryCode(e)} />
-				<button onClick={e => handleOnClick_submitLocationData(e)}>Submit</button>
+			<form
+				method='get'
+				onSubmit={handleOnClick_submitLocationData}
+				className='location-form'
+				style={{ display: isLocationFormVisible ? 'flex' : 'none' }}
+			>
+
+				{/* TODO: Add Country, State, and City to this location form */}
+				{/* COUNTRY */}
+				{/* <label htmlFor="country">Country:</label>
+				<input id='country' type="text" placeholder={country} onChange={e => handleOnChange_country(e)} /> */}
+
+				{/* STATE */}
+				{/* <label htmlFor="state">State:</label>
+				<input id='state' type="text" placeholder={state} onChange={e => handleOnChange_state(e)} /> */}
+
+				{/* CITY */}
+				{/* <label htmlFor="city">City:</label>
+				<input id='city' type="text" placeholder={city} onChange={e => handleOnChange_city(e)} /> */}
+
+				{/* ZIP CODE */}
+				<label
+					htmlFor="zip-code"
+				>Zip Code:</label>
+				<input
+					id='zip-code'
+					type="text"
+					pattern='^[0-9]{5}(?:-[0-9]{4})?$'
+					placeholder={zipCode}
+					onChange={e => handleOnChange_zipCode(e)}
+				/>
+
+				{
+					recentSearches.length > 0 &&
+					<ul>
+						{
+							recentSearches.map((location, index) => {
+								return (
+									<li>
+										<input
+											type="radio"
+											id={`${location.name}_${index}`}
+											checked={previousLocations[index]}
+											onChange={() => setPreviousLocations(prev =>
+												prev.map((value, i) =>
+													i === index
+												)
+											)}
+										/>
+										<label
+											htmlFor={`${location.name}_${index}`}>
+											{location.name} {location.zip}
+										</label>
+									</li>
+								)
+							})
+						}
+					</ul>
+				}
+
+				<button type='submit'>Submit</button>
 			</form>
 
-			<div className='current-weather-container'>
+			<CurrentWeather
+				data={data}
+				location={location.name}
+				country={location.country}
+				zip={location.zip}
+				onClick_toggleLocationFormVisibility={() => setIsLocationFormVisisble(!isLocationFormVisible)}
+			/>
 
-				{/* DATE */}
-				<h2 className='date'>
-					{currentDate && monthToString(currentDate.getMonth())}
-					-{currentDate && currentDate.getDate()}
-					-{currentDate && currentDate.getYear() - 100} {/* years after 1999 are given weird (124 === 2024) so -100 removes the leading 1 */}
-				</h2>
-
-				{/* SUNRISE / SUNSET */}
-				<div className='sunrise-sunset'>
-					{(data.current.sunrise && data.current.sunset) &&
-						<>
-							<h3>Sunrise & Sunset</h3>
-							<p>
-								{minuteToString(data.current.sunrise)}<br />
-								{minuteToString(data.current.sunset)}
-							</p>
-						</>
-					}
-				</div>
-
-				{/* // TEMPERATURE */}
-				<div className='temperature'>
-					<h3>Temp</h3>
-					{
-						(data.current.temp && data.current.feels_like) &&
-						<Temperature
-							temp={data.current.temp}
-							feels_like={data.current.feels_like}
-						/>
-					}
-				</div>
-
-				{/* CLOUDINESS */}
-				<div className='cloudiness'>
-					<h3>Coudiness</h3>
-					{data.current.clouds}%
-				</div>
-
-				{/* ULTRA VIOLET INDEX */}
-				<div className='uv-index'>
-					<h3>UV Index</h3>
-					{
-						data.current.uvi <= 2 ? `Low ${data.current.uvi}`
-							: data.current.uvi <= 5 ? `Moderate ${data.current.uvi}`
-								: data.current.uvi <= 7 ? `High ${data.current.uvi}`
-									: data.current.uvi <= 10 ? `Very High ${data.current.uvi}`
-										: `Extreme ${data.current.uvi}`
-					}
-				</div>
-
-				{/* VISIBILITY (api is in kilimeters) */}
-				<div className='visibility'>
-					<h3>Visibility</h3>
-					{data.current.visibility / 1000} km
-				</div>
-
-				{/* WIND */}
-				<div className='wind'>
-					<h3>Wind</h3>
-					<div>Speed / Gusts</div>
-					{data.current.wind_speed} / {data.current.wind_gust} mph
-				</div>
-
-				{/* RAIN / SNOW */}
-				<div className='rain-snow'>
-					<h3>Rain/Snow</h3>
-					{
-						data.current.rain ? `Rain ${data.current.rain} mm/h`
-							: data.current.snow ? `Snow ${data.current.snow} mm/h`
-								: ` N/A`
-					}
-				</div>
-			</div >
-
-			{/*  */}
+			{/* HOURLY */}
 			< CarasolList
-				name='hourly'
+				name='12-HOUR FORECAST'
 				data={data.hourly && data.hourly}
 			/>
 
-			<CarasolList
-				name='daily'
-				data={data.daily && data.daily}
+			{/* DAILY */}
+			<BlockList
+				title='10-DAY FORECAST'
+				data={data.daily}
 			/>
 		</>
 	)
